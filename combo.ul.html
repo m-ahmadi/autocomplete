@@ -1,0 +1,164 @@
+<style>
+.combo {
+  width: 200px;
+  position: relative;
+}
+.combo *, .combo *::before, .combo *::after {
+  box-sizing: border-box;
+}
+.combo .focus {
+  background: #0080ff;
+}
+.combo .hide {
+  display: none;
+}
+.combo input {
+  width: 100%;
+}
+.combo ul {
+  position: absolute;
+  top: 5px;
+  width: 100%;
+  height: 200px;
+  overflow-y: scroll;
+  border: 1px solid #b0b0b0;
+  border-top: none;
+  list-style: none;
+  padding: 0;
+}
+.combo ul > li {
+  float: right;
+  width: 100%;
+  border-width: 0 0 1px;
+  border-style: solid;
+  border-color: #b0b0b0;
+  font-size: 0.9rem;
+	padding: 0 5px;
+}
+.combo ul > li:last-child {
+  border-bottom: 0;
+}
+.combo ul > li > div {
+  float: right;
+}
+.combo .query {
+  background: #ffffbf;
+}
+</style>
+
+<div class="combo">
+	<input type="text" />
+	<ul class="hide"></ul>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" crossorigin="anonymous"></script>
+<script>
+const data = [...Array(1000)].map((v,i) => 'name '+ (i+1));
+
+$(function () {
+	const cFocus = 'focus';
+	const cHide = 'hide';
+	const input = $('.combo > input');
+	const ul = $('.combo > ul');
+	let i = -1;
+	let selected;
+	
+	ul // focus on mouse move and select item on mousedown
+	.on('mouseenter', 'li', function () {
+		$('li', ul).removeClass(cFocus);
+		i = $(this).addClass(cFocus).index();
+	})
+	.on('mouseleave', 'li', function () {
+		$(this).removeClass(cFocus);
+	})
+	.on('mousedown', 'li', function () {
+		const val = $(this).data('val');
+		selected = val;
+		input.val(val);
+		close();
+	});
+	
+	input // open/close on focus/blur, nav on up/down arrow, select on enter, clear on esc, change ul on input.
+	.on('blur', close)
+	.on('focus', open)
+	.on('input', simpleDebounce(function () {
+		i = -1;
+		const v = this.value;
+		if ( isClosed() ) open();
+		if (v === '') {
+			search();
+			$('li:first-child', ul)[0].scrollIntoView({block: 'nearest'});
+		} else if (v.length > 1) {
+			search(v);
+		}
+	}, 100))
+	.on('keydown', function (e) {
+		const key = e.which;
+		if (key !== 38 && key !== 40 && key !== 13 && key !== 27) return;
+		if (key === 13) { // enter
+			const focusVal = $('li.focus', ul).data('val');
+			selected = focusVal;
+			input.val(focusVal);
+			close();
+			return;
+		} else if (key === 27) { // esc
+			selected = undefined;
+			input.val('').trigger('input');
+			return;
+		}
+		const lis = $('li', ul);
+		const inc = key === 38 ? -1 : key === 40 ? 1 : 0; // 38=up 40=down
+		i += inc;
+		i = i > lis.length-1 ? 0 : i < 0 ? lis.length-1 : i;
+		focus();
+	});
+	
+	function focus() {
+		$('li', ul).removeClass(cFocus).eq(i).addClass(cFocus)[0].scrollIntoView({block: 'nearest'});
+	}
+	function open() {
+		i = -1;
+		$('li', ul).removeClass(cFocus);
+		if ( isClosed() ) ul.removeClass(cHide);
+		if (selected) {
+			i = $(`li[data-val="${selected}"]`, ul).index();
+			focus();
+		}
+	}
+	function close() {
+		if ( !isClosed() ) ul.addClass(cHide);
+	}
+	function isClosed() {
+		return ul.hasClass(cHide);
+	}
+	
+	function search(query) {
+		const res = query ? data.filter( i => i.includes(query) ) : data;
+		const rgx         = query ? new RegExp(escRgx(query), 'g')        : undefined;
+		const replaceWith = query ? `<span class="query">${query}</span>` : undefined;
+		
+		if (query) { // put exact matches first
+			res.sort(a => new RegExp(`^${query}$`).test(a.Symbol) ? -1 : 1);
+		}
+		
+		ul.html(res.map(i => `
+			<li data-val="${i}">
+				${query ? i.replace(rgx, replaceWith) : i}
+			</li>
+		`));
+	}
+	
+	search();
+});
+
+function simpleDebounce(fn, wait) {
+	let timeout
+	return function (...args) {
+		clearTimeout(timeout);
+		timeout = setTimeout(() => fn.apply(this, args), wait);
+	};
+}
+function escRgx(str='') {
+	return str.replace(/[|\\{}()[\]^$+*?.-]/g, '\\$&');
+}
+</script>
