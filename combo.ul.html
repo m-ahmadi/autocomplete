@@ -4,16 +4,10 @@
   position: relative;
 }
 .combo *, .combo *::before, .combo *::after {
-  box-sizing: border-box;
-}
-.combo .focus {
-  background: #0080ff;
-}
-.combo .hide {
-  display: none;
+	box-sizing: border-box;
 }
 .combo input {
-  width: 100%;
+	width: 100%;
 }
 .combo ul {
   position: absolute;
@@ -36,14 +30,12 @@
 	padding: 0 5px;
 }
 .combo ul > li:last-child {
-  border-bottom: 0;
+	border-bottom: 0;
 }
-.combo ul > li > div {
-  float: right;
-}
-.combo .query {
-  background: #ffffbf;
-}
+
+.combo .hide  { display: none; }
+.combo .focus { background: #0080ff; }
+.combo .query { background: #ffffbf; }
 </style>
 
 <div class="combo">
