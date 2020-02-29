@@ -1,0 +1,249 @@
+<style>
+:root {
+	--input-width: 200px;
+}
+.combo {
+  width: var(--input-width);
+  position: relative;
+}
+.combo *, .combo *::before, .combo *::after {
+	box-sizing: border-box;
+}
+.combo > input:first-child {
+	width: 100%;
+	padding-right: 20px;
+}
+.combo > input:first-child:valid {
+  padding-right: 35px;
+}
+.combo ul {
+  position: absolute;
+  top: 5px;
+  width: 100%;
+  height: 200px;
+  overflow-y: scroll;
+  border: 1px solid #b0b0b0;
+  border-top: none;
+  list-style: none;
+  padding: 0;
+}
+.combo ul > li {
+  float: right;
+  width: 100%;
+  border-width: 0 0 1px;
+  border-style: solid;
+  border-color: #b0b0b0;
+  font-size: 0.9rem;
+	padding: 0 5px;
+}
+.combo ul > li:last-child {
+	border-bottom: 0;
+}
+
+.combo .hide  { display: none; }
+.combo .focus { background: #0080ff; }
+.combo .query { background: #ffffbf; }
+
+.combo .filter-btn {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  top: 5px;
+  right: 5px;
+  cursor: pointer;
+  fill: white;
+  stroke: black;
+  stroke-linejoin: round;
+  stroke-width: 5.2px;
+}
+.combo .x-btn {
+  position: absolute;
+  right: 20px;
+  user-select: none;
+  cursor: pointer;
+}
+.combo .filter-box {
+  position: absolute;
+  top: 0;
+  left: var(--input-width);
+  width: 200px;
+  height: 100px;
+  border: 1px solid #e3e3e3;
+  background: whitesmoke;
+}
+</style>
+
+<div class="combo">
+	<input type="text" required />
+	<span class="x-btn hide">✖</span>
+	<svg class="filter-btn" viewBox="0 0 102 102"><path d="M3,3 H99 L62,58 V89 L40,99 V58 L3,3 Z" /></svg>
+	<ul class="hide"></ul>
+	<div class="filter-box hide">
+		<label><input type="checkbox" name="lt500" />less than 500</label>
+		<br>
+		<label><input type="checkbox" name="gt500" />greater than 500</label>
+	</div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" crossorigin="anonymous"></script>
+<script>
+const data = [...Array(1000)].map((v,i) => ({ text: 'name '+(i+1), type: ((i+1)>500?'gt':'lt')+'500' }));
+
+$(function () {
+	const input     = $('.combo > input');
+	const ul        = $('.combo > ul');
+	const xBtn      = $('.combo .x-btn');
+	const filterBtn = $('.combo .filter-btn');
+	const filterBox = $('.combo .filter-box');
+	
+	const cFocus = 'focus';
+	const cHide = 'hide';
+	
+	let i = -1;
+	let selected;
+	let filterBoxOpened;
+	
+	ul // focus on mouse move and select item on mousedown
+	.on('mouseenter', 'li', function () {
+		$('li', ul).removeClass(cFocus);
+		i = $(this).addClass(cFocus).index();
+	})
+	.on('mouseleave', 'li', function () {
+		$(this).removeClass(cFocus);
+	})
+	.on('mousedown', 'li', function () {
+		select( $(this).data('val') );
+		xBtn.show();
+	});
+	
+	input // open/close on focus/blur, nav on up/down arrow, select on enter, clear on esc, change ul on input.
+	.on('blur', close)
+	.on('focus', open)
+	.on('input', simpleDebounce(function () {
+		i = -1;
+		const v = this.value;
+		const len = v.length;
+		if ( isClosed() ) open();
+		if (v === '') {
+			xBtn.hide();
+			search();
+			scrollTo( $('li:first-child', ul)[0] );
+		} else if (len > 0) {
+			xBtn.show();
+			if (len > 1) search(v);
+		}
+	}, 100))
+	.on('keydown', function (e) {
+		const key = e.which;
+		if (key !== 38 && key !== 40 && key !== 13 && key !== 27) return;
+		if (key === 13) { // enter
+			select( $('li.focus', ul).data('val') );
+			xBtn.show();
+			return;
+		} else if (key === 27) { // esc
+			selected = undefined;
+			input.val('').trigger('input');
+			return;
+		}
+		const lis = $('li', ul);
+		const inc = key === 38 ? -1 : key === 40 ? 1 : 0; // 38=up 40=down
+		i += inc;
+		i = i > lis.length-1 ? 0 : i < 0 ? lis.length-1 : i;
+		focus();
+	});
+	
+	// block input `blur` if clicks are on xBtn,filterBtn,filterBox (due to `mousedown` firing before `blur`)
+	$('.combo')
+		.on('mousedown', '.x-btn', prevent)
+		.on('mousedown', '.filter-btn', prevent)
+		.on('mousedown', '.filter-box', prevent);
+	
+	// close on clicks outside the .combo (optional)
+	$('body').on('click', function (e) {
+		if ( !e.target.closest('.combo') ) close();
+	});
+	
+	function select(v) {
+		selected = v;
+		input.val(v);
+		close();
+	}
+	function focus() {
+		scrollTo(  $('li', ul).removeClass(cFocus).eq(i).addClass(cFocus)[0]  );
+	}
+	function scrollTo(el) {
+		if (el) el.scrollIntoView({block: 'nearest'});
+	}
+	function open() {
+		i = -1;
+		$('li', ul).removeClass(cFocus);
+		if ( isClosed() ) ul.removeClass(cHide);
+		if (selected) {
+			i = $(`li[data-val="${selected}"]`, ul).index();
+			focus();
+		}
+		if (filterBoxOpened) filterBox.removeClass(cHide)
+	}
+	function close() {
+		if ( !isClosed() ) ul.addClass(cHide);
+		filterBox.addClass(cHide);
+	}
+	function isClosed() {
+		return ul.hasClass(cHide);
+	}
+	
+	
+	function search(query) {
+		const filters = Array.from( $('input:checked', filterBox).map((i,el) => el.name) );
+		const flen = filters.length;
+		const predicate =
+			query  && flen  ? i => i.text.includes(query) && filters.includes(i.type) :
+			query  && !flen ? i => i.text.includes(query) :
+			!query && flen  ? i => filters.includes(i.type) : undefined;
+		
+		const res = predicate ? data.filter(predicate) : data;
+		const rgx         = query ? new RegExp(escRgx(query), 'g')        : undefined;
+		const replaceWith = query ? `<span class="query">${query}</span>` : undefined;
+		
+		if (query) { // put exact matches first
+			res.sort(a => new RegExp(`^${query}$`).test(a.text) ? -1 : 1);
+		}
+		
+		ul.html(res.map(i => `
+			<li data-val="${i.text}">
+				${query ? i.text.replace(rgx, replaceWith) : i.text}
+			</li>
+		`).join(''));
+	}
+	
+	filterBtn.on('click', function () {
+		filterBoxOpened = !filterBoxOpened; // toggling
+		filterBox.toggleClass(cHide);
+	});
+	
+	xBtn.on('click', function () {
+		input.val('').trigger('input');
+	});
+	
+	filterBox.on('click', 'input[type="checkbox"]', function () {
+		open();
+		search( input.val() );
+	});
+	
+	search();
+});
+
+function prevent(e) {
+	e.preventDefault();
+}
+function escRgx(str='') {
+	return str.replace(/[|\\{}()[\]^$+*?.-]/g, '\\$&');
+}
+function simpleDebounce(fn, wait) {
+	let timeout
+	return function (...args) {
+		clearTimeout(timeout);
+		timeout = setTimeout(() => fn.apply(this, args), wait);
+	};
+}
+</script>
