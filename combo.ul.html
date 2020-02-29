@@ -99,8 +99,16 @@ $(function () {
 		focus();
 	});
 	
+	function select(v) {
+		selected = v;
+		input.val(v);
+		close();
+	}
 	function focus() {
 		scrollTo(  $('li', ul).removeClass(cFocus).eq(i).addClass(cFocus)[0]  );
+	}
+	function scrollTo(el) {
+		if (el) el.scrollIntoView({block: 'nearest'});
 	}
 	function open() {
 		i = -1;
@@ -116,14 +124,6 @@ $(function () {
 	}
 	function isClosed() {
 		return ul.hasClass(cHide);
-	}
-	function scrollTo(el) {
-		if (el) el.scrollIntoView({block: 'nearest'});
-	}
-	function select(v) {
-		selected = v;
-		input.val(v);
-		close();
 	}
 	
 	function search(query) {
@@ -145,14 +145,14 @@ $(function () {
 	search();
 });
 
+function escRgx(str='') {
+	return str.replace(/[|\\{}()[\]^$+*?.-]/g, '\\$&');
+}
 function simpleDebounce(fn, wait) {
 	let timeout
 	return function (...args) {
 		clearTimeout(timeout);
 		timeout = setTimeout(() => fn.apply(this, args), wait);
 	};
-}
-function escRgx(str='') {
-	return str.replace(/[|\\{}()[\]^$+*?.-]/g, '\\$&');
 }
 </script>
