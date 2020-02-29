@@ -137,7 +137,7 @@ $(function () {
 			<li data-val="${i}">
 				${query ? i.replace(rgx, replaceWith) : i}
 			</li>
-		`));
+		`).join(''));
 	}
 	
 	search();
