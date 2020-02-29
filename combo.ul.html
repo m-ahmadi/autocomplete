@@ -79,7 +79,7 @@ $(function () {
 		if ( isClosed() ) open();
 		if (v === '') {
 			search();
-			$('li:first-child', ul)[0].scrollIntoView({block: 'nearest'});
+			scrollTo( $('li:first-child', ul)[0] );
 		} else if (v.length > 1) {
 			search(v);
 		}
@@ -106,7 +106,7 @@ $(function () {
 	});
 	
 	function focus() {
-		$('li', ul).removeClass(cFocus).eq(i).addClass(cFocus)[0].scrollIntoView({block: 'nearest'});
+		scrollTo(  $('li', ul).removeClass(cFocus).eq(i).addClass(cFocus)[0]  );
 	}
 	function open() {
 		i = -1;
@@ -122,6 +122,9 @@ $(function () {
 	}
 	function isClosed() {
 		return ul.hasClass(cHide);
+	}
+	function scrollTo(el) {
+		if (el) el.scrollIntoView({block: 'nearest'});
 	}
 	
 	function search(query) {
