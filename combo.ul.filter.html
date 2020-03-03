@@ -90,15 +90,14 @@
 const data = [...Array(1000)].map((v,i) => ({ text: 'name '+(i+1), type: ((i+1)>500?'gt':'lt')+'500' }));
 
 $(function () {
-	const input     = $('.combo > input');
-	const ul        = $('.combo > ul');
-	const xBtn      = $('.combo .x-btn');
-	const filterBtn = $('.combo .filter-btn');
-	const filterBox = $('.combo .filter-box');
+	const root      = $('.combo');
+	const input     = $('input[type="text"]', root);
+	const ul        = $('ul', root);
+	const xBtn      = $('.x-btn', root);
+	const filterBtn = $('.filter-btn', root);
+	const filterBox = $('.filter-box', root);
 	
-	const cFocus = 'focus';
-	const cHide = 'hide';
-	
+	const [cFocus, cHide] = ['focus', 'hide'];
 	let i = -1;
 	let selected;
 	let filterBoxOpened;
@@ -153,7 +152,7 @@ $(function () {
 	});
 	
 	// block input `blur` if clicks are on xBtn,filterBtn,filterBox (due to `mousedown` firing before `blur`)
-	$('.combo')
+	root
 		.on('mousedown', '.x-btn', prevent)
 		.on('mousedown', '.filter-btn', prevent)
 		.on('mousedown', '.filter-box', prevent);

@@ -43,11 +43,12 @@
 <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>
 <script>
 $(function () {
-	const cFocus = 'focus';
-	const cHide = 'hide';
-	const input = $('.combo > input');
-	const table = $('.combo > table');
-	const trs = $('.combo > table > tbody > tr');
+	const root  = $('.combo');
+	const input = $('input', root);
+	const table = $('table', root);
+	const trs   = $('table > tbody > tr', root);
+	
+	const [cFocus, cHide] = ['focus', 'hide'];
 	let i = -1;
 	
 	table // focus on mouse enter/leave, select on mousedown
