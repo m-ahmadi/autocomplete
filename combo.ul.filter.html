@@ -46,6 +46,7 @@
 
 .combo .x-btn {
   position: absolute;
+	top: 0;
   right: 20px;
   user-select: none;
   cursor: pointer;
@@ -85,7 +86,8 @@
 	</div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" crossorigin="anonymous"></script>
+<!-- <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" crossorigin="anonymous"></script> -->
+<script src="https://cdn.jsdelivr.net/npm/cash-dom@latest/dist/cash.min.js"></script>
 <script>
 const data = [...Array(1000)].map((v,i) => ({ text: 'name '+(i+1), type: ((i+1)>500?'gt':'lt')+'500' }));
 
